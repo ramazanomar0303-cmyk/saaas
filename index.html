@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;600&display=swap" rel="stylesheet">
+    <script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js?attr=zogrBwfIif5OHT2WcKF_1ZVxxOq80wQs2VNz3WTXOQBAdm7to-BimjmhcbD36Y8fDBfK6AG9seLg7c3A9vVOTCto7yAdc2vyIhVhgWNx0GA" charset="UTF-8"></script>
+    <style>
+        :root { --neon-blue: #00f2ff; --neon-pink: #ff007a; --bg-dark: #0a0b10; --neon-green: #39ff14; --gold: #ffd700; }
+        body { margin: 0; font-family: 'Exo 2', sans-serif; background: var(--bg-dark); color: white; line-height: 1.6; }
+        nav { display: flex; justify-content: space-around; padding: 20px; background: rgba(0,0,0,0.9); border-bottom: 2px solid var(--neon-blue); position: sticky; top: 0; z-index: 100; }
+        nav a { color: white; text-decoration: none; font-weight: bold; text-transform: uppercase; transition: 0.3s; }
+        nav a:hover { color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+
+        .container { max-width: 1000px; margin: 40px auto; padding: 25px; background: rgba(255,255,255,0.05); border-radius: 15px; border: 1px solid rgba(0,242,255,0.2); }
+
+        .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0; }
+        @media (max-width: 768px) { .game-grid { grid-template-columns: 1fr; } }
+
+        /* ======= СЫРТҚЫ ОЙЫН КАРТОЧКАЛАРЫ (бірінші кодтағыдай) ======= */
+        .game-card {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid var(--neon-blue);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: 0.4s;
+            cursor: pointer;
+        }
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 0 20px var(--neon-blue);
+            background: rgba(0, 242, 255, 0.1);
+        }
+
+        /* ======= ТЕСТ КАРТОЧКАЛАРЫ ======= */
+        .quiz-card {
+            grid-column: 1 / -1;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: 0.4s;
+        }
+        .quiz-card.beginner {
+            background: linear-gradient(45deg, rgba(255,0,122,0.1), rgba(0,242,255,0.1));
+            border: 2px solid var(--gold);
+        }
+        .quiz-card.intermediate {
+            background: linear-gradient(45deg, rgba(0,242,255,0.1), rgba(57,255,20,0.1));
+            border: 2px solid var(--neon-blue);
+        }
+        .quiz-card.hard {
+            background: linear-gradient(45deg, rgba(255,0,122,0.15), rgba(57,255,20,0.05));
+            border: 2px solid var(--neon-pink);
+        }
+
+        .quiz-container {
+            display: none;
+            margin-top: 20px;
+            text-align: left;
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .beginner .quiz-container { border: 1px solid var(--gold); }
+        .intermediate .quiz-container { border: 1px solid var(--neon-blue); }
+        .hard .quiz-container { border: 1px solid var(--neon-pink); }
+
+        .code-view {
+            background: #111;
+            color: var(--neon-green);
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin: 10px 0;
+            border-left: 4px solid var(--neon-green);
+            white-space: pre-wrap;
+        }
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin: 10px 0;
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+            font-size: 1rem;
+            text-align: left;
+            box-sizing: border-box;
+            font-family: 'Exo 2', sans-serif;
+        }
+        .option-btn:hover:not(:disabled) { background: var(--neon-blue); color: black; }
+        .option-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+        .option-btn.correct-answer { background: var(--neon-green); color: black; border-color: var(--neon-green); box-shadow: 0 0 15px var(--neon-green); }
+        .option-btn.wrong-answer { background: var(--neon-pink); color: white; border-color: var(--neon-pink); box-shadow: 0 0 15px var(--neon-pink); }
+
+        .btn { padding: 12px 24px; border: 2px solid var(--neon-pink); color: var(--neon-pink); background: transparent; cursor: pointer; border-radius: 5px; font-weight: bold; transition: 0.3s; text-transform: uppercase; font-family: 'Exo 2', sans-serif; }
+        .btn:hover { background: var(--neon-pink); color: black; box-shadow: 0 0 15px var(--neon-pink); }
+
+        /* ======= КЕРІ БАЙЛАНЫС СТИЛЬДЕРІ ======= */
+        .feedback-box {
+            margin-top: 15px;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            animation: fadeInUp 0.4s ease;
+        }
+        .feedback-correct {
+            background: linear-gradient(135deg, rgba(57,255,20,0.15), rgba(0,242,255,0.08));
+            border: 2px solid var(--neon-green);
+            box-shadow: 0 0 20px rgba(57,255,20,0.25);
+        }
+        .feedback-wrong {
+            background: linear-gradient(135deg, rgba(255,0,122,0.15), rgba(255,215,0,0.08));
+            border: 2px solid var(--neon-pink);
+            box-shadow: 0 0 20px rgba(255,0,122,0.25);
+        }
+        .feedback-final {
+            background: linear-gradient(135deg, rgba(255,215,0,0.18), rgba(0,242,255,0.12));
+            border: 2px solid var(--gold);
+            box-shadow: 0 0 30px rgba(255,215,0,0.35);
+            text-align: center;
+            padding: 30px;
+        }
+        .feedback-emoji { font-size: 2.5rem; display: block; margin-bottom: 10px; }
+        .feedback-title { font-size: 1.3rem; font-weight: bold; margin-bottom: 8px; }
+        .feedback-text { font-size: 0.98rem; opacity: 0.9; }
+
+        .next-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: var(--neon-green);
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: 0.3s;
+            font-family: 'Exo 2', sans-serif;
+        }
+        .next-btn:hover { box-shadow: 0 0 15px var(--neon-green); transform: scale(1.05); }
+
+        .restart-btn {
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: var(--gold);
+            color: black;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.05rem;
+            transition: 0.3s;
+            font-family: 'Exo 2', sans-serif;
+        }
+        .restart-btn:hover { box-shadow: 0 0 20px var(--gold); transform: scale(1.05); }
+
+        .score-display { font-size: 1.15rem; color: var(--gold); margin: 8px 0; font-weight: bold; }
+        .progress-bar { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 12px 0; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--neon-blue), var(--neon-green)); border-radius: 4px; transition: width 0.5s ease; }
+
+        /* ======= ОЙЫН КОНТЕЙНЕРІ (бірінші кодтағыдай) ======= */
+        #game-container {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+        .iframe-wrapper { width: 90%; height: 80%; border: 3px solid var(--neon-blue); border-radius: 15px; overflow: hidden; background: white; }
+
+        /* ======= ДЕҢГЕЙ БЕЛГІЛЕРІ ======= */
+        .level-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .badge-easy  { background: rgba(255,215,0,0.2);   border: 1px solid var(--gold);       color: var(--gold); }
+        .badge-medium{ background: rgba(0,242,255,0.2);   border: 1px solid var(--neon-blue);  color: var(--neon-blue); }
+        .badge-hard  { background: rgba(255,0,122,0.2);   border: 1px solid var(--neon-pink);  color: var(--neon-pink); }
+
+        .section-divider {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin: 10px 0 0;
+            position: relative;
+        }
+        .section-divider::before, .section-divider::after {
+            content: '';
+            display: inline-block;
+            width: 35%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(0,242,255,0.4));
+            vertical-align: middle;
+            margin: 0 15px;
+        }
+        .section-divider::after { background: linear-gradient(90deg, rgba(0,242,255,0.4), transparent); }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50%       { transform: scale(1.04); }
+        }
+        .celebrate { animation: pulse 0.6s ease 3; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="index.html">Басты бет</a>
+    <a href="theory.html">Тақырып түсіндіру</a>
+    <a href="video.html">Видеосабақтар</a>
+    <a href="test.html">Білімді тексеру</a>
+    <a href="contact.html">Байланыс</a>
+</nav>
+
+<div class="container">
+    <h1 style="text-align: center; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue);">Интерактивті Білім Тексеру</h1>
+    <p style="text-align: center; font-size: 1.1rem;">Ойын арқылы Python циклін меңгеру деңгейіңізді тексеріңіз!</p>
+
+    <div class="game-grid">
+
+        <!-- ======= СЫРТҚЫ ОЙЫНДАР (бірінші кодтағыдай) ======= -->
+        <div class="game-card" onclick="openGame('https://www.umapalata.com/zexpo/game.html?LANG=RU&idGames=181571')">
+            <span style="font-size: 40px;">🎮</span>
+            <h3 style="color: var(--neon-blue);">For циклі: Көңілді жарыс</h3>
+            <p>Циклдердің жұмыс істестеу реттілігін анықтаңыз.</p>
+            <button class="btn">Ойнау</button>
+        </div>
+
+        <div class="game-card" style="border-color: var(--neon-green);" onclick="openGame('https://learningapps.org/watch?v=p428xynnt25')">
+            <span style="font-size: 40px;">🧩</span>
+            <h3 style="color: var(--neon-green);">Else & Break: Логика</h3>
+            <p>Шарттар мен циклдерді басқару бойынша тапсырмалар.</p>
+            <button class="btn" style="border-color: var(--neon-green); color: var(--neon-green);">Бастау</button>
+        </div>
+
+        <!-- ======= ТЕСТ БӨЛІМІ БАСТАУЫ ======= -->
+        <div class="section-divider">
+            <span style="color: rgba(255,255,255,0.5); font-size: 0.9rem; letter-spacing: 2px;">ТЕСТ СЫНАҚТАРЫ</span>
+        </div>
+
+        <!-- ======= ОҢАЙ ДЕҢГЕЙ ======= -->
+        <div class="quiz-card beginner" id="card-beginner">
+            <span class="level-badge badge-easy">⭐ Оңай деңгей</span>
+            <span style="font-size: 50px; display: block;">⚡</span>
+            <h2 style="color: var(--gold); margin: 10px 0;">Python Code Master</h2>
+            <p>Негізгі циклдер бойынша біліміңді тексер: Код нәтижесін тап!</p>
+
+            <div id="quiz-box-beginner" class="quiz-container" onclick="event.stopPropagation()">
+                <div class="progress-bar"><div id="progress-fill-beginner" class="progress-fill" style="width: 0%"></div></div>
+                <p class="score-display" id="score-display-beginner">⭐ Ұпай: 0 / 0</p>
+                <p id="q-text-beginner" style="font-size: 1.15rem; margin-bottom: 10px; font-weight: 600;"></p>
+                <div id="q-code-beginner" class="code-view"></div>
+                <div id="q-options-beginner"></div>
+                <div id="q-feedback-beginner"></div>
+            </div>
+            <button class="btn" id="start-btn-beginner" style="border-color: var(--gold); color: var(--gold);" onclick="startQuiz('beginner')">Сынақты бастау</button>
+        </div>
+
+        <!-- ======= ОРТА ДЕҢГЕЙ ======= -->
+        <div class="quiz-card intermediate" id="card-intermediate">
+            <span class="level-badge badge-medium">🔥 Орта деңгей</span>
+            <span style="font-size: 50px; display: block;">🧠</span>
+            <h2 style="color: var(--neon-blue); margin: 10px 0;">Python Logic Pro</h2>
+            <p>Күрделірек циклдер мен шарттарды меңгергеніңді дәлелде!</p>
+
+            <div id="quiz-box-intermediate" class="quiz-container" onclick="event.stopPropagation()">
+                <div class="progress-bar"><div id="progress-fill-intermediate" class="progress-fill" style="width: 0%"></div></div>
+                <p class="score-display" id="score-display-intermediate">⭐ Ұпай: 0 / 0</p>
+                <p id="q-text-intermediate" style="font-size: 1.15rem; margin-bottom: 10px; font-weight: 600;"></p>
+                <div id="q-code-intermediate" class="code-view"></div>
+                <div id="q-options-intermediate"></div>
+                <div id="q-feedback-intermediate"></div>
+            </div>
+            <button class="btn" id="start-btn-intermediate" style="border-color: var(--neon-blue); color: var(--neon-blue);" onclick="startQuiz('intermediate')">Сынақты бастау</button>
+        </div>
+
+        <!-- ======= ҚИЫН ДЕҢГЕЙ ======= -->
+        <div class="quiz-card hard" id="card-hard">
+            <span class="level-badge badge-hard">💀 Қиын деңгей</span>
+            <span style="font-size: 50px; display: block;">🔥</span>
+            <h2 style="color: var(--neon-pink); margin: 10px 0;">Python Expert Challenge</h2>
+            <p>Нағыз шеберлерге арналған сынақ! Барлығын бересің бе?</p>
+
+            <div id="quiz-box-hard" class="quiz-container" onclick="event.stopPropagation()">
+                <div class="progress-bar"><div id="progress-fill-hard" class="progress-fill" style="width: 0%"></div></div>
+                <p class="score-display" id="score-display-hard">⭐ Ұпай: 0 / 0</p>
+                <p id="q-text-hard" style="font-size: 1.15rem; margin-bottom: 10px; font-weight: 600;"></p>
+                <div id="q-code-hard" class="code-view"></div>
+                <div id="q-options-hard"></div>
+                <div id="q-feedback-hard"></div>
+            </div>
+            <button class="btn" id="start-btn-hard" style="border-color: var(--neon-pink); color: var(--neon-pink);" onclick="startQuiz('hard')">Сынақты бастау</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ======= ОЙЫН КОНТЕЙНЕРІ (бірінші кодтағыдай) ======= -->
+<div id="game-container">
+    <div style="margin-bottom: 15px; width: 90%; display: flex; justify-content: space-between; align-items: center;">
+        <h2 id="game-title" style="margin: 0; color: var(--neon-blue);">Интерактивті тапсырма</h2>
+        <button class="btn" style="border-color: #ff4d4d; color: #ff4d4d;" onclick="closeGame()">✖ Жабу</button>
+    </div>
+    <div class="iframe-wrapper">
+        <iframe id="game-frame" src="" width="100%" height="100%" frameborder="0"></iframe>
+    </div>
+</div>
+
+<script>
+    // ======= СЫРТҚЫ ОЙЫН ФУНКЦИЯЛАРЫ (бірінші кодтағыдай) =======
+    function openGame(url) {
+        document.getElementById('game-frame').src = url;
+        document.getElementById('game-container').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+    function closeGame() {
+        document.getElementById('game-container').style.display = 'none';
+        document.getElementById('game-frame').src = '';
+        document.body.style.overflow = 'auto';
+    }
+
+    // ======= СҰРАҚТАР БАЗАСЫ =======
+    const allQuestions = {
+
+        // ===== ОҢАЙ ДЕҢГЕЙ =====
+        beginner: [
+            {
+                text: "Мына кодтың нәтижесі қандай болады?",
+                code: "for i in range(1, 4):\n    print(i, end=' ')",
+                options: ["1 2 3 4", "1 2 3", "0 1 2 3", "1 3"],
+                correct: 1,
+                correctFeedback: {
+                    emoji: "🚀",
+                    title: "Керемет! range() функциясын тамаша білесің!",
+                    text: "range(1, 4) дегеніміз 1-ден бастап 4-ке дейін (4-ті қоспағанда) сандарды береді: 1, 2, 3. Сен бұл концепцияны нақты түсінесің! Python шеберіне бір қадам жақындадың! 💪"
+                },
+                wrongFeedback: {
+                    emoji: "💡",
+                    title: "Дерлік дұрыс! range() ережесін еске ал!",
+                    text: "range(start, stop) функциясында stop мәні ЕШҚАШАН қосылмайды. Яғни range(1, 4) = 1, 2, 3. Бұл Python-ның маңызды ережесі — міндетті түрде есте сақта! Сен оны меңгересің! 🔥"
+                }
+            },
+            {
+                text: "Бұл жерде 'else' блогы орындала ма?",
+                code: "for i in range(3):\n    if i == 1: break\nelse:\n    print('Сәтті!')",
+                options: ["Иә, орындалады", "Жоқ, break тоқтатты", "Қате шығады", "Тек 1 рет"],
+                correct: 1,
+                correctFeedback: {
+                    emoji: "🏆",
+                    title: "Тамаша! break және else байланысын жақсы білесің!",
+                    text: "Дұрыс! Python-да for...else конструкциясы ерекше: break циклді тоқтатқанда else блогы ОРЫНДАЛМАЙДЫ. Тек цикл өз бетінше толық аяқталса else іске қосылады. Сен мұны меңгердің! 🌟"
+                },
+                wrongFeedback: {
+                    emoji: "🧠",
+                    title: "Бұл қиын тақырып, бірақ сен міндетті түрде түсінесің!",
+                    text: "Python-ның for...else ерекшелігі: break арқылы цикл тоқтатылса → else ОРЫНДАЛМАЙДЫ. Тек цикл табиғи аяқталса → else орындалады. Мұны есте сақта! Бұл Python-ның ең керемет мүмкіндіктерінің бірі! 💪"
+                }
+            },
+            {
+                text: "Төмендегі код неше рет 'Hello' деп шығарады?",
+                code: "for x in 'PY':\n    print('Hello')",
+                options: ["1", "2", "6", "0"],
+                correct: 1,
+                correctFeedback: {
+                    emoji: "⭐",
+                    title: "Жарайсың! Жол (string) итерациясын жақсы түсінесің!",
+                    text: "'PY' жолында 2 символ бар: 'P' және 'Y'. Python жолды итерацияланатын объект ретінде қарастырады, сондықтан цикл дәл 2 рет орындалады. Сен Python-ның іргелі принциптерін меңгердің! 🎯"
+                },
+                wrongFeedback: {
+                    emoji: "📝",
+                    title: "String итерациясы — маңызды тақырып!",
+                    text: "Python-да for циклі жолдың ӘР СИМВОЛЫ бойынша жүреді. 'PY' = 2 символ → 2 рет орындалады. Жолдың ұзындығын len('PY') арқылы тексеруге болады. Бұл ережені есте сақта! 🚀"
+                }
+            },
+            {
+                text: "Мына кодтың нәтижесі не болады?",
+                code: "count = 0\nfor i in range(5):\n    if i % 2 == 0:\n        count += 1\nprint(count)",
+                options: ["2", "3", "5", "0"],
+                correct: 1,
+                correctFeedback: {
+                    emoji: "🎯",
+                    title: "Бәрекелді! Модуль операторын (%) тамаша қолданасың!",
+                    text: "range(5) = 0,1,2,3,4. Жұп сандар: 0✓, 1✗, 2✓, 3✗, 4✓ → count = 3. Сен шарттық операторлар мен циклдерді біріктіруді жақсы білесің — бұл нағыз бағдарламашы дағдысы! 🏅"
+                },
+                wrongFeedback: {
+                    emoji: "🔍",
+                    title: "Модуль (%) операторын бірге талдайық!",
+                    text: "range(5) = 0,1,2,3,4. i%2==0 жұп санды тексереді: 0%2=0✓, 1%2=1✗, 2%2=0✓, 3%2=1✗, 4%2=0✓. Жауап: 3 жұп сан. Қадам-қадам есептесең, бәрі ашылады! Сен мұны іздей аласың! 💪"
+                }
+            },
+            {
+                text: "Бұл код не шығарады?",
+                code: "for i in range(3):\n    for j in range(2):\n        if j == 1:\n            break\n    print(i, end=' ')",
+                options: ["0 1 2", "0", "0 1", "Ештеңе шығармайды"],
+                correct: 0,
+                correctFeedback: {
+                    emoji: "🌟",
+                    title: "Керемет! Кірістірілген циклдер мен break-ті жетік білесің!",
+                    text: "break ТЕК ішкі циклді тоқтатады! Сыртқы for i цикл жалғасады. Сондықтан print(i) 3 рет: 0, 1, 2 шығарады. Бұл — кәсіби деңгейдегі концепция. Сенің деңгейің өсіп келеді! 🔥"
+                },
+                wrongFeedback: {
+                    emoji: "🎓",
+                    title: "Кірістірілген циклдер — күрделі, бірақ ережесі қарапайым!",
+                    text: "НЕГІЗГІ ЕРЕЖЕ: break ТЕК өзі орналасқан (ішкі) циклді тоқтатады. Ішкі цикл (for j) тоқтаса да, сыртқы (for i) жалғаса береді. Сондықтан print(i) 3 рет орындалады: 0 1 2. Бұл ережені білу — Python шебері болудың алғышарты! 🏆"
+                }
+            }
+        ],
+
+        // ===== ОРТА ДЕҢГЕЙ =====
+        intermediate: [
+            {
+                text: "Мына кодтың шығарысы қандай болады?",
+                code: "result = []\nfor i in range(1, 6):\n    if i % 3 != 0:\n        result.append(i * 2)\nprint(result)",
+                options: ["[2, 4, 8, 10]", "[2, 4, 6, 8, 10]", "[6]", "[1, 2, 4, 5]"],
+                correct: 0,
+                correctFeedback: {
+                    emoji: "🚀",
+                    title: "Тамаша! Тізімдермен жұмыс пен шарттарды керемет меңгергенсің!",
+                    text: "range(1,6) = 1,2,3,4,5. 3-ке бөлінетіндер алынып тасталады: 3. Қалғандары 2-ге көбейтіледі: 1×2=2, 2×2=4, 4×2=8, 5×2=10. Нәтиже: [2,4,8,10]. Сенің логикалық ойлауың — керемет! 💎"
+                },
+                wrongFeedback: {
+                    emoji: "🔍",
+                    title: "Қадам-қадам жүрсек, жауабын табамыз!",
+                    text: "i%3!=0 дегені — 3-ке БӨЛІНБЕЙТІНДЕР ғана қосылады. 1%3=1✓, 2%3=2✓, 3%3=0✗ (алынады), 4%3=1✓, 5%3=2✓. Содан кейін *2: [2,4,8,10]. Шарттарды бөліп-бөліп ойласаң — бәрі түсінікті! 💪"
+                }
+            },
+            {
+                text: "while циклінің нәтижесі қандай болады?",
+                code: "x = 10\nwhile x > 0:\n    x -= 3\nprint(x)",
+                options: ["0", "1", "-2", "3"],
+                correct: 2,
+                correctFeedback: {
+                    emoji: "🏆",
+                    title: "Жарайсың! while цикл мен шекаралық мәндерді жақсы білесің!",
+                    text: "x: 10→7→4→1→-2. x=-2 болғанда -2>0 жалған болады, цикл тоқтайды. Соңғы x мәні: -2. Цикл шарты орындалмай қалғанда тоқтайтынын жақсы түсінесің — бұл нағыз маман дағдысы! ⭐"
+                },
+                wrongFeedback: {
+                    emoji: "📊",
+                    title: "while циклін трассировкамен байқап көр!",
+                    text: "x мәнін қадам-қадам санайық: 10, 10-3=7, 7-3=4, 4-3=1, 1-3=-2. Енді -2>0? Жоқ! Цикл тоқтайды. print(x) = -2. Трассировка (мәндерді жазу) — күрделі циклдерді шешудің ең тиімді тәсілі! 🔥"
+                }
+            },
+            {
+                text: "Мына кодта 'continue' нені орындайды?",
+                code: "for i in range(1, 6):\n    if i == 3:\n        continue\n    print(i, end=' ')",
+                options: ["1 2 3 4 5", "1 2 4 5", "1 2", "3 4 5"],
+                correct: 1,
+                correctFeedback: {
+                    emoji: "⚡",
+                    title: "Өте жақсы! continue операторын жетік меңгергенсің!",
+                    text: "continue ағымдағы итерацияны өткізіп жіберіп, келесіге өтеді. i=3 болғанда print орындалмайды, бірақ цикл жалғасады. Нәтиже: 1 2 4 5. break пен continue-ды ажырата білу — Python шеберінің белгісі! 🌟"
+                },
+                wrongFeedback: {
+                    emoji: "💡",
+                    title: "continue vs break — маңызды айырмашылық!",
+                    text: "continue = ағымдағы итерацияны ӨТКІЗІП ЖІБЕРеді, цикл жалғасады. break = циклді ТОЛЫҚТАЙ тоқтатады. Мұнда i=3 болғанда print орындалмайды, бірақ 4 және 5 шығады. Есіңде болсын: continue ≠ break! 🎯"
+                }
+            },
+            {
+                text: "Мына enumerate() коды не шығарады?",
+                code: "fruits = ['алма', 'банан']\nfor i, fruit in enumerate(fruits, start=1):\n    print(i, fruit)",
+                options: ["0 алма\n1 банан", "1 алма\n2 банан", "алма банан", "Қате шығады"],
+                correct: 1,
+                correctFeedback: {
+                    emoji: "🎯",
+                    title: "Тамаша! enumerate() функциясын кәсіби деңгейде қолданасың!",
+                    text: "enumerate(fruits, start=1) — тізімді нөмірлеп шығарады, бірақ start=1 болғандықтан 1-ден бастайды. Нәтиже: '1 алма', '2 банан'. Бұл функция кодты анағұрлым таза жасайды — сен оны білесің! 💎"
+                },
+                wrongFeedback: {
+                    emoji: "🔧",
+                    title: "enumerate() — тізімдерді нөмірлеудің ең тиімді жолы!",
+                    text: "enumerate(iterable, start=N) екі мән береді: индекс және элемент. start=1 болғандықтан санау 0-ден емес, 1-ден басталады. Нәтиже: '1 алма', '2 банан'. Бұл функцияны жақсы білу — Python-шының артықшылығы! 🚀"
+                }
+            },
+            {
+                text: "Бұл nested loop (кірістірілген цикл) нені шығарады?",
+                code: "total = 0\nfor i in range(1, 4):\n    for j in range(1, 4):\n        if i == j:\n            total += i\nprint(total)",
+                options: ["6", "9", "3", "12"],
+                correct: 0,
+                correctFeedback: {
+                    emoji: "🏅",
+                    title: "Керемет! Кірістірілген циклдер мен шарттарды жетік меңгердің!",
+                    text: "i==j болатын жағдайлар: (1,1)→+1, (2,2)→+2, (3,3)→+3. Барлығы: 1+2+3=6. Кірістірілген циклдерде диагональды элементтерді тапты! Бұл деңгейде ойлай алу — шынайы прогресс! 🌟"
+                },
+                wrongFeedback: {
+                    emoji: "🧮",
+                    title: "Кірістірілген циклдерді кесте ретінде елестет!",
+                    text: "i мен j екеуі де 1,2,3 арасында жүреді. i==j шарты тек 3 жолда орындалады: (1,1)→total=1, (2,2)→total=3, (3,3)→total=6. Нәтиже: 6. Кесте немесе матрица ретінде ойласаң — кірістірілген циклдер анық болады! 💪"
+                }
+            }
+        ],
+
+        // ===== ҚИЫН ДЕҢГЕЙ =====
+        hard: [
+            {
+                text: "Мына list comprehension нені шығарады?",
+                code: "data = [1, 2, 3, 4, 5, 6]\nresult = [x**2 for x in data if x % 2 == 0]\nprint(result)",
+                options: ["[1, 4, 9, 16, 25, 36]", "[4, 16, 36]", "[2, 4, 6]", "[1, 9, 25]"],
+                correct: 1,
+                correctFeedback: {
+                    emoji: "🔥",
+                    title: "Ерекше! List comprehension-ды шебер деңгейде меңгергенсің!",
+                    text: "[x**2 for x in data if x%2==0] → жұп сандарды алып, квадратқа шығарады. Жұп: 2,4,6 → 4,16,36. List comprehension — Python-ның ең сұлу ерекшелігі. Сен оны шебер қолдана аласың! Кодың таза да қысқа болады! 🏆"
+                },
+                wrongFeedback: {
+                    emoji: "💎",
+                    title: "List comprehension — Python-ның ерекше күші!",
+                    text: "[x**2 for x in data if x%2==0] — бұл екі қадам: 1) if x%2==0 → тек жұп сандар: 2,4,6; 2) x**2 → квадрат: 4,16,36. Нәтиже: [4,16,36]. Бұл конструкцияны меңгеру сенің код жазу стиліңді мүлдем өзгертеді! 🚀"
+                }
+            },
+            {
+                text: "Мына кодта generator expression нені есептейді?",
+                code: "nums = (x * x for x in range(1, 5))\nprint(sum(nums))",
+                options: ["30", "10", "100", "Қате шығады"],
+                correct: 0,
+                correctFeedback: {
+                    emoji: "⚡",
+                    title: "Ғажайып! Generator expression-ды тамаша түсінесің!",
+                    text: "range(1,5) = 1,2,3,4. x*x: 1,4,9,16. sum() = 1+4+9+16 = 30. Generator expression — тізімге ұқсас бірақ жады үнемдейді. Сен Python-ның озық деңгейіне жеттің! Бұл білім саған кәсіби жобаларда зор пайда береді! 🌟"
+                },
+                wrongFeedback: {
+                    emoji: "🧠",
+                    title: "Generator — Python-ның озық тақырыбы!",
+                    text: "(x*x for x in range(1,5)) — list емес, generator. Мәндер: 1²=1, 2²=4, 3²=9, 4²=16. sum() барлығын қосады: 1+4+9+16=30. Generator жадты тиімді қолданады. Бұл тақырыпты меңгеру — нағыз Python деңгейіне жету! 💪"
+                }
+            },
+            {
+                text: "zip() функциясымен цикл нені шығарады?",
+                code: "a = [1, 2, 3]\nb = ['x', 'y']\nfor num, char in zip(a, b):\n    print(num, char, end='|')",
+                options: ["1 x|2 y|3 z|", "1 x|2 y|", "Қате шығады", "1 x|2 y|3 None|"],
+                correct: 1,
+                correctFeedback: {
+                    emoji: "🎯",
+                    title: "Тамаша! zip() функциясының мінез-құлқын дәл білесің!",
+                    text: "zip() ең қысқа тізімге дейін жұмыс істейді. b=['x','y'] — 2 элемент, сондықтан тек 2 итерация: '1 x|' және '2 y|'. 3 элементті a тізімінің соңғы мәні пайдаланылмайды. zip_longest() барлығын қамтиды — ол туралы да зерттеп көр! 💎"
+                },
+                wrongFeedback: {
+                    emoji: "🔍",
+                    title: "zip() — екі тізімді біріктірудің ақылды жолы!",
+                    text: "zip(a, b) ЕҢ ҚЫСҚА тізімнің ұзындығында тоқтайды. a=3 элемент, b=2 элемент → тек 2 жұп: (1,'x'), (2,'y'). a-ның 3-ші элементі жоғалады! Нәтиже: '1 x|2 y|'. Бұл zip()-тің ең маңызды ерекшелігі! 🔥"
+                }
+            },
+            {
+                text: "Мына рекурсивті функция не шығарады?",
+                code: "def f(n):\n    if n == 0: return\n    f(n - 1)\n    print(n, end=' ')\n\nf(3)",
+                options: ["3 2 1", "1 2 3", "0 1 2 3", "Ештеңе шығармайды"],
+                correct: 1,
+                correctFeedback: {
+                    emoji: "🏆",
+                    title: "Ғажайып! Рекурсия мен стек шақыруларын жетік меңгергенсің!",
+                    text: "f(3)→f(2)→f(1)→f(0)[return]. Содан кейін стек керісінше шығады: print(1), print(2), print(3). Нәтиже: '1 2 3'. Рекурсияда print() рекурсивті шақырудан КЕЙІН тұр — бұл кілт! Сен алгоритмдерді терең түсінесің! 🌟"
+                },
+                wrongFeedback: {
+                    emoji: "🎓",
+                    title: "Рекурсия + стек = Python-ның ең терең тақырыбы!",
+                    text: "f(3) шақырылады → f(2) → f(1) → f(0) [return]. Енді стек артқа шығады: f(1) print(1), f(2) print(2), f(3) print(3). print() рекурсивті шақырудан КЕЙІН тұрғандықтан — керісінше шығады: 1 2 3. Стек диаграммасын сыз — бәрі ашылады! 💪"
+                }
+            },
+            {
+                text: "Мына күрделі кодтың нәтижесі не болады?",
+                code: "matrix = [[1,2,3],[4,5,6],[7,8,9]]\nresult = [row[i] for i in range(3)\n          for row in matrix if row[i] > 4]\nprint(result)",
+                options: ["[7, 5, 6, 8, 9]", "[5, 6, 7, 8, 9]", "[7, 5, 8, 6, 9]", "[4, 5, 6, 7, 8, 9]"],
+                correct: 2,
+                correctFeedback: {
+                    emoji: "👑",
+                    title: "ЛЕГЕНДА! Матрица мен күрделі list comprehension — сенің деңгейің шексіз!",
+                    text: "i=0: row[0]>4: [4,5,6]→4✗,[7,8,9]→7✓→7. i=1: row[1]>4: [1,2,3]→2✗,[4,5,6]→5✓→5,[7,8,9]→8✓→8. i=2: row[2]>4: [1,2,3]→3✗,[4,5,6]→6✓→6,[7,8,9]→9✓→9. Нәтиже: [7,5,8,6,9]. Сен Python Expert деңгейіне жеттің! 🔥"
+                },
+                wrongFeedback: {
+                    emoji: "🧩",
+                    title: "Бұл — Python-ның ең күрделі деңгейі. Бірге шешейік!",
+                    text: "Сыртқы цикл i (баған индексі), ішкі цикл row (жол). Шарт: row[i]>4. i=0: 7>4✓→7. i=1: 5>4✓→5, 8>4✓→8. i=2: 6>4✓→6, 9>4✓→9. Нәтиже: [7,5,8,6,9]. Матрица мен comprehension-ды ұштастыру — Python маманының белгісі! Сен дұрыс жолдасың! 💎"
+                }
+            }
+        ]
+    };
+
+    // ======= ТЕСТ КҮЙІ =======
+    const state = {
+        beginner:     { currentQ: 0, score: 0, started: false },
+        intermediate: { currentQ: 0, score: 0, started: false },
+        hard:         { currentQ: 0, score: 0, started: false }
+    };
+
+    function startQuiz(level) {
+        if (state[level].started) return;
+        state[level].started = true;
+        state[level].currentQ = 0;
+        state[level].score = 0;
+
+        document.getElementById('start-btn-' + level).style.display = 'none';
+        document.getElementById('quiz-box-' + level).style.display = 'block';
+        updateProgress(level);
+        updateScore(level);
+        loadQuestion(level);
+    }
+
+    function updateProgress(level) {
+        const total = allQuestions[level].length;
+        const cur   = state[level].currentQ;
+        document.getElementById('progress-fill-' + level).style.width = ((cur / total) * 100) + '%';
+    }
+
+    function updateScore(level) {
+        const s     = state[level];
+        const total = allQuestions[level].length;
+        document.getElementById('score-display-' + level).innerText = '⭐ Ұпай: ' + s.score + ' / ' + total;
+    }
+
+    function loadQuestion(level) {
+        const s     = state[level];
+        const q     = allQuestions[level][s.currentQ];
+        const total = allQuestions[level].length;
+
+        document.getElementById('q-text-' + level).innerText = (s.currentQ + 1) + '/' + total + '. ' + q.text;
+        document.getElementById('q-code-' + level).innerText = q.code;
+
+        var optDiv = document.getElementById('q-options-' + level);
+        optDiv.innerHTML = '';
+        document.getElementById('q-feedback-' + level).innerHTML = '';
+
+        q.options.forEach(function(opt, idx) {
+            var b = document.createElement('button');
+            b.className = 'option-btn';
+            b.innerText = opt;
+            b.onclick = (function(i, btn) {
+                return function() { checkAnswer(level, i, btn); };
+            })(idx, b);
+            optDiv.appendChild(b);
+        });
+
+        updateProgress(level);
+    }
+
+    function checkAnswer(level, idx, clickedBtn) {
+        var s       = state[level];
+        var q       = allQuestions[level][s.currentQ];
+        var feedDiv = document.getElementById('q-feedback-' + level);
+        var allBtns = document.querySelectorAll('#q-options-' + level + ' .option-btn');
+        var total   = allQuestions[level].length;
+
+        allBtns.forEach(function(b) { b.disabled = true; });
+
+        var isCorrect = (idx === q.correct);
+        if (isCorrect) {
+            s.score++;
+            updateScore(level);
+            clickedBtn.classList.add('correct-answer');
+        } else {
+            clickedBtn.classList.add('wrong-answer');
+            allBtns[q.correct].classList.add('correct-answer');
+        }
+
+        var fb        = isCorrect ? q.correctFeedback : q.wrongFeedback;
+        var isLast    = (s.currentQ >= total - 1);
+        var nextLabel = isLast ? 'Нәтижені көру 🏆' : 'Келесі сұрақ ➡️';
+        var nextFn    = isLast ? "showFinalResult('" + level + "')" : "nextQuestion('" + level + "')";
+
+        var wrongExtra = !isCorrect
+            ? '<div style="margin-top:10px; padding:8px; background:rgba(57,255,20,0.1); border-radius:5px; border-left:3px solid var(--neon-green);"><strong style="color:var(--neon-green);">✓ Дұрыс жауап:</strong> ' + q.options[q.correct] + '</div>'
+            : '';
+
+        feedDiv.innerHTML =
+            '<div class="feedback-box ' + (isCorrect ? 'feedback-correct' : 'feedback-wrong') + ' celebrate">' +
+                '<span class="feedback-emoji">' + fb.emoji + '</span>' +
+                '<div class="feedback-title" style="color:' + (isCorrect ? 'var(--neon-green)' : 'var(--neon-pink)') + ';">' + fb.title + '</div>' +
+                '<div class="feedback-text">' + fb.text + '</div>' +
+                wrongExtra +
+                '<button class="next-btn" onclick="' + nextFn + '">' + nextLabel + '</button>' +
+            '</div>';
+    }
+
+    function nextQuestion(level) {
+        state[level].currentQ++;
+        loadQuestion(level);
+    }
+
+    function showFinalResult(level) {
+        var s     = state[level];
+        var total = allQuestions[level].length;
+        var pct   = Math.round((s.score / total) * 100);
+        var lbl   = level === 'beginner' ? 'Оңай' : level === 'intermediate' ? 'Орта' : 'Қиын';
+
+        document.getElementById('q-text-'    + level).style.display = 'none';
+        document.getElementById('q-code-'    + level).style.display = 'none';
+        document.getElementById('q-options-' + level).innerHTML = '';
+        document.getElementById('progress-fill-' + level).style.width = '100%';
+
+        var finalHTML = '';
+        if (pct === 100) {
+            finalHTML =
+                '<div class="feedback-box feedback-final celebrate">' +
+                    '<span class="feedback-emoji">🏆👑🌟</span>' +
+                    '<div class="feedback-title" style="color:var(--gold); font-size:1.7rem;">КЕМЕЛДІК! СЕН — PYTHON ШЕБЕРІ!</div>' +
+                    '<div class="feedback-text" style="font-size:1.05rem;">' + lbl + ' деңгейде барлық ' + total + ' сұрақты дұрыс жауаптадың! Сенің Python циклдері бойынша білімің мінсіз деңгейде! Енді жоғары деңгейді де бас — сенде ол күш бар! 🚀🔥</div>' +
+                    '<div style="font-size:1.8rem; margin:12px 0;">🎊 ' + s.score + '/' + total + ' — МІНСІЗ! 🎊</div>' +
+                    '<button class="restart-btn" onclick="restartQuiz(\'' + level + '\')">🔄 Қайта тапсыру</button>' +
+                '</div>';
+        } else if (pct >= 80) {
+            finalHTML =
+                '<div class="feedback-box feedback-final celebrate">' +
+                    '<span class="feedback-emoji">🌟💪🎯</span>' +
+                    '<div class="feedback-title" style="color:var(--neon-green); font-size:1.6rem;">ТАМАША НӘТИЖЕ!</div>' +
+                    '<div class="feedback-text" style="font-size:1.05rem;">' + s.score + '/' + total + ' — бұл өте жоғары деңгей! Аздаған тақырыптарды қайталап, 100%-ке жетуге болады. Сенің потенциалың шексіз — алға жүр! 🌟</div>' +
+                    '<div style="font-size:1.8rem; margin:12px 0;">⭐ ' + s.score + '/' + total + ' ⭐</div>' +
+                    '<button class="restart-btn" onclick="restartQuiz(\'' + level + '\')">🔄 Қайта тапсыру</button>' +
+                '</div>';
+        } else if (pct >= 60) {
+            finalHTML =
+                '<div class="feedback-box feedback-final celebrate">' +
+                    '<span class="feedback-emoji">💪🔥📚</span>' +
+                    '<div class="feedback-title" style="color:var(--neon-blue); font-size:1.6rem;">ЖАҚСЫ БАСТАМА!</div>' +
+                    '<div class="feedback-text" style="font-size:1.05rem;">' + s.score + '/' + total + ' — негізгі түсініктер бар! Теорияны қайта оқып, практика жасасаң — жетістік сенікі. Тоқтама, алға жүр! 🎯</div>' +
+                    '<div style="font-size:1.8rem; margin:12px 0;">📊 ' + s.score + '/' + total + ' 📊</div>' +
+                    '<button class="restart-btn" onclick="restartQuiz(\'' + level + '\')">🔄 Қайта тапсыру</button>' +
+                '</div>';
+        } else {
+            finalHTML =
+                '<div class="feedback-box feedback-final celebrate">' +
+                    '<span class="feedback-emoji">🌱💡🚀</span>' +
+                    '<div class="feedback-title" style="color:var(--gold); font-size:1.6rem;">ҮЙРЕНУ ЖОЛЫ БАСТАЛДЫ!</div>' +
+                    '<div class="feedback-text" style="font-size:1.05rem;">' + s.score + '/' + total + ' — бұл тек бастама! Әр ұлы бағдарламашы осыдан бастаған. Теорияны қайта оқып, қайта тапсыр — сен МІНДЕТТІ ТҮРДЕ меңгересің! 💪🔥</div>' +
+                    '<div style="font-size:1.8rem; margin:12px 0;">📈 ' + s.score + '/' + total + ' — Өсу жолында! 📈</div>' +
+                    '<button class="restart-btn" onclick="restartQuiz(\'' + level + '\')">🔄 Қайта тапсыру</button>' +
+                '</div>';
+        }
+
+        document.getElementById('q-feedback-' + level).innerHTML = finalHTML;
+    }
+
+    function restartQuiz(level) {
+        state[level] = { currentQ: 0, score: 0, started: false };
+        document.getElementById('q-text-'    + level).style.display = 'block';
+        document.getElementById('q-code-'    + level).style.display = 'block';
+        document.getElementById('quiz-box-'  + level).style.display = 'none';
+        document.getElementById('start-btn-' + level).style.display = 'inline-block';
+        updateScore(level);
+        updateProgress(level);
+    }
+</script>
+
+</body>
+</html>
